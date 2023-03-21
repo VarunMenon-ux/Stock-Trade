@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1>Stock Market Simulation</h1>
+    <p>Market status: {% if is_market_open %}<span class="text-success">Open</span>{% else %}<span class="text-danger">Closed</span>{% endif %}</p>
+    {% if current_user.is_authenticated %}
+    <p>Account balance: ${{ current_user.cash_balance|round(2, 'floor') }}</p>
+    {% endif %}
+    <h2>Available Stocks</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stock in stocks %}
+            <tr>
+                <td>{{ stock.ticker }}</td>
+                <td>{{ stock.name }}</td>
+                <td>{{ stock.price }}</td>
+                <td>
+                    <a class="btn btn-primary" href="{{ url_for('buy_stock', stock_id=stock.id) }}">Buy</a>
+                    <a class="btn btn-warning" href="{{ url_for('sell_stock', stock_id=stock.id) }}">Sell</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <h2>Portfolio</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Name</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stock in user_portfolio %}
+            <tr>
+                <td>{{ stock.ticker }}</td>
+                <td>{{ stock.name }}</td>
+                <td>{{ stock.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a class="btn btn-success" href="{{ url_for('deposit') }}">Deposit</a>
+    <a class="btn btn-danger" href="{{ url_for('withdraw') }}">Withdraw</a>
+    {% if is_admin %}
+    <h2>Admin Actions</h2>
+    <a class="btn btn-info" href="{{ url_for('create_stock') }}">Create Stock</a>
+    <a class="btn btn-info" href="{{ url_for('set_market_hours') }}">Set Market Hours</a>
+    <a class="btn btn-info" href="{{ url_for('set_market_schedule') }}">Set Market Schedule</a>
+    {% endif %}
+</div>
+{% endblock %}

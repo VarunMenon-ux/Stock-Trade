@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h3 class="text-center">Set Market Schedule</h3>
+            <form method="POST" action="{{ url_for('set_market_schedule') }}">
+                {{ form.csrf_token }}
+                <div class="form-group">
+                    <label for="{{ form.day.id }}">Day of the Week</label>
+                    {{ form.day(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.start_date.id }}">Start Date</label>
+                    {{ form.start_date(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.end_date.id }}">End Date</label>
+                    {{ form.end_date(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
