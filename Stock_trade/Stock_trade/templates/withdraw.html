@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Withdraw</h2>
+  <form method="POST" action="{{ url_for('withdraw') }}">
+    {{ form.csrf_token }}
+    <div class="form-group">
+      <label for="{{ form.amount.id }}">Amount</label>
+      {{ form.amount(class="form-control") }}
+    </div>
+    <button type="submit" class="btn btn-primary">Withdraw</button>
+  </form>
+{% endblock %}

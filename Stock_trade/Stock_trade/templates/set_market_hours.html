@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h3 class="text-center">Set Market Hours</h3>
+            <form method="POST" action="{{ url_for('set_market_hours') }}">
+                {{ form.csrf_token }}
+                <div class="form-group">
+                    <label for="{{ form.open_time.id }}">Opening Time</label>
+                    {{ form.open_time(class="form-control") }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.close_time.id }}">Closing Time</label>
+                    {{ form.close_time(class="form-control") }}
+                </div>
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
