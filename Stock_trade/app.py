@@ -1,6 +1,5 @@
-from flask import Flask, render_template, redirect, request, url_for, session, flash
+from flask import Flask, render_template, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from flask import current_app
 from flask_migrate import Migrate
 from datetime import datetime
 from forms import RegisterForm, LoginForm, CreateStockForm, BuyStockForm, SellStockForm, SetMarketHoursForm, SetMarketScheduleForm, DepositForm, WithdrawForm
@@ -10,13 +9,13 @@ import random
 import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# Initialize the app and set some configuration values
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SECRET_KEY'] = 'secret key'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize the database and login manager
+# Initializing the database and login manager
 db.init_app(app)
 login_manager = LoginManager()
 login_manager.login_view = 'login'
@@ -32,7 +31,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 @app.template_filter()
-def datetimeformat(value, format='%Y-%m-%d %H:%M:%S'):
+def datetimeformat(value, format='%Y-%m-%d'):
     if value is None:
         return ''
     return value.strftime(format)
@@ -58,14 +57,22 @@ def update_stock_prices():
 
         stocks = Stock.query.all()
         for stock in stocks:
+            stock.prev_price = stock.price
             stock.price = max(stock.price * random.uniform(0.98, 1.02), 0.01)
+            if stock.high is None or stock.price > stock.high:
+                stock.high = stock.price
+
+            if stock.low is None or stock.price < stock.low:
+                stock.low = stock.price
         db.session.commit()
+
 
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=update_stock_prices, trigger="interval", seconds=60)
 scheduler.start()
 
 atexit.register(lambda: scheduler.shutdown())
+
 
 @app.route("/")
 def index():
@@ -77,7 +84,7 @@ def index():
 
 
 
-# Define the register route
+# register route
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     form = RegisterForm()
@@ -117,7 +124,7 @@ def login():
 
 
 
-# Define the logout route
+# logout route
 @app.route('/logout')
 @login_required
 def logout():
@@ -125,7 +132,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-# Define the create stock route
+# create stock route
 @app.route("/create_stock", methods=['GET', 'POST'])
 @login_required
 def create_stock():
@@ -136,20 +143,20 @@ def create_stock():
     form = CreateStockForm()
 
     if form.validate_on_submit():
-        existing_stock = Stock.query.filter_by(ticker=form.ticker.data).first()
+        existing_stock = Stock.query.filter_by(name=form.name.data).first()
         if existing_stock is None:
-            stock = Stock(ticker=form.ticker.data, name=form.name.data, volume=form.volume.data, price=form.price.data)
+            stock = Stock(name=form.name.data, volume=form.volume.data, price=form.price.data, prev_price=form.price.data, high = form.price.data, low= form.price.data)
             db.session.add(stock)
             db.session.commit()
-            flash(f'Stock {form.name.data} ({form.ticker.data}) created successfully.', 'success')
+            flash(f'Stock {form.name.data} created successfully.', 'success')
             return redirect(url_for('index'))
         else:
-            flash(f'Stock with ticker {form.ticker.data} already exists.', 'warning')
+            flash(f'Stock with name {form.name.data} already exists.', 'warning')
 
     return render_template('create_stock.html', title='Create Stock', form=form)
 
 
-# Define the buy_stock route
+# buy_stock route
 @app.route("/buy_stock/<int:stock_id>", methods=['GET', 'POST'])
 @login_required
 def buy_stock(stock_id):
@@ -170,7 +177,7 @@ def buy_stock(stock_id):
                 current_user.stocks.append(UserStock(stock=stock, volume=form.volume.data, purchase_price=stock.price))  
                 db.session.commit()
 
-                # Create a Trade object
+                
                 trade = Trade(user_id=current_user.id, stock_id=stock.id, trade_type='buy', volume=form.volume.data, trade_price=stock.price, total_value=form.volume.data * stock.price, trade_date=datetime.utcnow())
                 db.session.add(trade)
                 db.session.commit()
@@ -183,7 +190,7 @@ def buy_stock(stock_id):
             if current_user.cash_balance < (form.volume.data * form.limit_price.data):
                 flash('Insufficient funds to place this limit order.', 'danger')
             else:
-                expiration_date = datetime.strptime(str(form.expiration_date.data), '%Y-%m-%d %H:%M:%S')
+                expiration_date = datetime.strptime(str(form.expiration_date.data), '%Y-%m-%d')
 
                 limit_order = LimitOrder(stock=stock, volume=form.volume.data, limit_price=form.limit_price.data, expiration_date=expiration_date, user_id=current_user.id, order_type='buy')  # CHANGE: add user_id and order_type
                 db.session.add(limit_order)
@@ -196,11 +203,6 @@ def buy_stock(stock_id):
 
 
 
-
-from datetime import datetime
-# ... other imports
-
-# ...
 
 @app.route("/sell_stock/<int:stock_id>", methods=['GET', 'POST'])
 @login_required
@@ -234,12 +236,12 @@ def sell_stock(stock_id):
                 db.session.delete(user_stock)
             db.session.commit()
 
-            # Create a transaction record for selling stocks
+            
             transaction = Trade(user_id=current_user.id, stock_id=stock.id, trade_type='sell', volume=form.volume.data, trade_price=stock.price, total_value=form.volume.data * stock.price, trade_date=datetime.utcnow())
             db.session.add(transaction)
             db.session.commit()
 
-            flash(f'{form.volume.data} shares of {stock.name} ({stock.ticker}) sold successfully at market price.', 'success')
+            flash(f'{form.volume.data} shares of {stock.name} sold successfully at market price.', 'success')
             return redirect(url_for('index'))
 
     return render_template('sell_stock.html', title='Sell Stock', form=form, stock=stock, user_stock=user_stock)
@@ -352,7 +354,6 @@ def set_market_schedule():
     return render_template('set_market_schedule.html', form=form)
 
 
-# Define the cancel order route
 @app.route("/cancel_order/<int:trade_id>")
 @login_required
 def cancel_order(trade_id):
@@ -374,6 +375,7 @@ def cancel_order(trade_id):
         flash('Order cancelled successfully.', 'success')
 
     return redirect(url_for('portfolio'))
+
 
 
 if __name__ == '__main__':

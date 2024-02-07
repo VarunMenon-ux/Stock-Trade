@@ -25,13 +25,15 @@ class User(UserMixin, db.Model):
 
 class Stock(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    ticker = db.Column(db.String(10), index=True, unique=True)
     name = db.Column(db.String(100))
     volume = db.Column(db.Integer)
     price = db.Column(db.Float)
+    prev_price = db.Column(db.Float, default=0.0)
     users = db.relationship('UserStock', backref='stock', lazy='dynamic')
     limit_orders = db.relationship('LimitOrder', backref='stock', lazy='dynamic')
     trades = db.relationship('Trade', backref='stock', lazy='dynamic')
+    high = db.Column(db.Float, default=0.0)
+    low = db.Column(db.Float, default=0.0)
 
 
 class UserStock(db.Model):

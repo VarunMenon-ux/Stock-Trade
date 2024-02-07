@@ -4,10 +4,7 @@
     <h1>Buy Stock</h1>
     <form method="POST" action="{{ url_for('buy_stock', stock_id=stock.id) }}">
         {{ form.hidden_tag() }}
-        <div class="form-group">
-            <label for="ticker">Ticker</label>
-            <input type="text" class="form-control" id="ticker" name="ticker" value="{{ stock.ticker }}" readonly>
-        </div>
+        
         <div class="form-group">
             <label for="name">Name</label>
             <input type="text" class="form-control" id="name" name="name" value="{{ stock.name }}" readonly>

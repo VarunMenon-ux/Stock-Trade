@@ -19,7 +19,6 @@ class LoginForm(FlaskForm):
 
 class CreateStockForm(FlaskForm):
     name = StringField('Company Name', validators=[InputRequired(), Length(min=3, max=100)])
-    ticker = StringField('Stock Ticker', validators=[InputRequired(), Length(min=1, max=10)])
     volume = IntegerField('Volume', validators=[InputRequired(), NumberRange(min=1)])
     price = DecimalField('Initial Price', validators=[InputRequired(), NumberRange(min=0)])
 

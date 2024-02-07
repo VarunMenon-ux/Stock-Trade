@@ -19,7 +19,3 @@ with app.app_context():
         db.session.add(admin)
         db.session.commit()
 
-    # Temporarily print the admin password
-    admin_user = User.query.filter_by(username=admin_username).first()
-    print(f"Admin password (hashed): {admin_user.password_hash}")
-    print(f"Admin password (plain): {admin_password}")
